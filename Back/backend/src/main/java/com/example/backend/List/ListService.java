@@ -52,12 +52,11 @@ public void updateLists(String jsonPayload) {
             int endIndex = idString.length() - 1;
             String objectIdString = idString.substring(startIndex, endIndex);
 
-            // Create the ObjectId object
             ObjectId id = new ObjectId(objectIdString);
 
             String title = document.getString("title");
             String mainText = document.getString("mainText");
-            if(id != null){
+            if(id!= null){
                 UpdateResult updateResult = collection.updateOne(Filters.eq("_id", id),
                         Updates.combine(
                                 Updates.set("title", title),
@@ -65,18 +64,44 @@ public void updateLists(String jsonPayload) {
                         ),
                         new UpdateOptions().upsert(false) 
                 );
-            } else {
-                ObjectId newId = new ObjectId();
-                Document newDocument = new Document("_id", newId)
-                                            .append("title", title)
-                                            .append("mainText", mainText);
-                
-                collection.insertOne(newDocument);
-            }
+            } 
         }
-    } catch (IOException e) {
-        System.err.println("Error reading JSON payload: " + e.getMessage());
-    } catch (Exception e) {
+        } catch (Exception e) {
+        System.err.println("Error updating documents: " + e.getMessage());
+    }
+}
+public void addToLists(String jsonPayload) {
+    try (MongoClient mongoClient = MongoClients.create(mongoUri)) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Document[] documents = objectMapper.readValue(jsonPayload, Document[].class);
+        
+        MongoDatabase database = mongoClient.getDatabase("ListDB");
+        MongoCollection<Document> collection = database.getCollection("ListCollection");
+        
+        for (Document document : documents) {
+
+            Object idObject = document.get("_id");
+            String idString = idObject.toString();
+
+            int startIndex = idString.indexOf("=") + 1;
+            int endIndex = idString.length() - 1;
+            String objectIdString = idString.substring(startIndex, endIndex);
+
+            ObjectId id = new ObjectId(objectIdString);
+
+            String title = document.getString("title");
+            String mainText = document.getString("mainText");
+            if(id!= null){
+                UpdateResult updateResult = collection.updateOne(Filters.eq("_id", id),
+                        Updates.combine(
+                                Updates.set("title", title),
+                                Updates.set("mainText", mainText)
+                        ),
+                        new UpdateOptions().upsert(false) 
+                );
+            } 
+        }
+        } catch (Exception e) {
         System.err.println("Error updating documents: " + e.getMessage());
     }
 }
@@ -106,25 +131,5 @@ public List<String> getAllLists() {
     return jsonDocuments;
 }
 
-public void useDb() {
-    try (MongoClient mongoClient = MongoClients.create(mongoUri)) {
-        
-        MongoDatabase database = mongoClient.getDatabase("ListDB");
 
-
-        MongoCollection<Document> collection = database.getCollection("ListCollection");
-
-       
-        MongoCursor<Document> cursor = collection.find().iterator();
-        try {
-            while (cursor.hasNext()) {
-                Document document = cursor.next();
-                System.out.println(document.toJson());
-               
-            }
-        } finally {
-            cursor.close(); 
-        }
-    }
-}
 }

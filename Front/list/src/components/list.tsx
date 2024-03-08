@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
-import { json } from 'stream/consumers';
 
 function List() {
     const [editable, setEditable] = useState(false); 
+    const [newRow,setNewRow] = useState(false);
     const [data, setData] = useState([
         {
             _id:"",
@@ -25,7 +25,9 @@ function List() {
     };
 
     const updateList = async () => {
-  
+        const isEmptyData = data.every((item) => {
+            return Object.values(item).every((value) => value === "");
+        });
         try {
             console.log("send update", data);
             const response: AxiosResponse = await axios.post("http://localhost:8080/UpdateList", data);
@@ -59,7 +61,15 @@ function List() {
         });
         setData(newData);
     };
+    const createNewRow = (title:string,mainText:string) => {
 
+        setData([...data, { _id: "", title: title, mainText:mainText }]);
+
+        
+    }
+    const handleNewRowList = () => {
+        setNewRow(!newRow); 
+    };
     const handleEditList = () => {
         setEditable(!editable); 
     };
@@ -72,7 +82,8 @@ function List() {
             <div className='buttons'>
                 <button onClick={getList}>Get LIST</button>
                 <button onClick={updateList}>Update List</button>
-                <button>Remove List</button>
+                <button>Remove Row</button>
+                <button onClick={handleNewRowList}>{editable ? 'Finish Adding' : 'Add Row'}</button>
                 <button onClick={handleEditList}>{editable ? 'Finish Editing' : 'Edit List'}</button>
             </div>
             <ul className='list'>
@@ -96,10 +107,33 @@ function List() {
                                 onChange={(e) => handleTextChange(index, e.target.value)}
                             />
                         ) : (
-                            element.mainText
+                            <div>{element.mainText}</div>
                         )}
                     </li>
                 ))}
+                <br></br>
+
+                {newRow ? (
+                            <input
+                                type="text"
+                                defaultValue={""}
+                                onBlur={handleFinishEditing}
+                                onChange={(e) => handleTitleTextChange(data.length-1, e.target.value)}
+                            />
+                        ) : (
+                            <div></div>
+                        )}
+                        {newRow ? (
+                            <input
+                                type="text"
+                                defaultValue={""}
+                                onBlur={handleFinishEditing}
+                                onChange={(e) => handleTextChange(data.length-1, e.target.value)}
+                            />
+                        ) : (
+                            <div></div>
+                        )}
+
             </ul>
         </div>
     );
