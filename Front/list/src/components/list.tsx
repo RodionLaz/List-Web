@@ -9,7 +9,6 @@ interface ListItem {
 
 function List() {
     const [editable, setEditable] = useState(false);
-    const [newRow, setNewRow] = useState(false);
     const [data, setData] = useState<ListItem[]>([]);
 
     const getList = async () => {
@@ -29,6 +28,7 @@ function List() {
             console.log("send update", data);
             const response: AxiosResponse = await axios.post("http://localhost:8080/UpdateList", data);
             console.log('Response data:', response);
+            getList();
         } catch (error) {
             console.error('Error:', error);
         }
@@ -64,11 +64,12 @@ function List() {
     };
 
     const handleEditList = () => {
+        if(editable){
+            updateList()
+        }
         setEditable(!editable);
-    };
 
-    const handleFinishEditing = () => {
-        updateList();
+        
     };
 
     return (
@@ -79,16 +80,21 @@ function List() {
                 <button onClick={updateList}>Update List</button>
                 <button onClick={deleteLast}>Remove Row</button>
                 <button onClick={handleNewRowList}>{'Add Row'}</button>
-                <button onClick={handleEditList}>{editable ? 'Finish Editing' : 'Edit List'}</button>
+                {
+                    editable ? 
+                    <button onClick={handleEditList}>Finish Editing</button>
+                    :
+                    <button onClick={handleEditList}>Edit List</button>
+                }
             </div>
             <ul className='list'>
                 {data.map((element, index) => (
                     <li key={index}>
                         {editable ? (
                             <input
+                                id='title'
                                 type="text"
                                 defaultValue={element.title}
-                                onBlur={handleFinishEditing}
                                 onChange={(e) => handleTitleTextChange(index, e.target.value)}
                             />
                         ) : (
@@ -98,7 +104,6 @@ function List() {
                             <input
                                 type="text"
                                 defaultValue={element.mainText}
-                                onBlur={handleFinishEditing}
                                 onChange={(e) => handleTextChange(index, e.target.value)}
                             />
                         ) : (

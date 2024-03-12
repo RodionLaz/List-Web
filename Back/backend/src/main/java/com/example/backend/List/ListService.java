@@ -20,6 +20,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
 @Service
@@ -86,16 +87,20 @@ public void updateLists(String jsonPayload) {
 
 public void removeLast(){
     try(MongoClient mongoClient = MongoClients.create(mongoUri)){
-        MongoDatabase database = mongoClient.getDatabase("ListDb");
+        MongoDatabase database = mongoClient.getDatabase("ListDB");
         MongoCollection<Document> collection = database.getCollection("ListCollection");
         Document lastDocument = collection.find()
         .sort(Sorts.descending("_id"))
         .first();
         if (lastDocument != null) {
-            Object lastDocumentId = lastDocument.getObjectId("_id");
-        
-            collection.deleteOne(Filters.eq("_id", lastDocumentId));
-            System.out.println("Last document removed successfully.");
+            Object lastDocumentId = lastDocument.get("_id");
+
+            DeleteResult deleteResult = collection.deleteOne(Filters.eq("_id", lastDocumentId));
+            if (deleteResult.getDeletedCount() > 0) {
+                System.out.println("Last document removed successfully.");
+            } else {
+                System.out.println("No document found with the specified ID.");
+            }
         } else {
             System.out.println("No documents found in the collection.");
         }
